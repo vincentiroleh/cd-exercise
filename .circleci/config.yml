@@ -6,8 +6,6 @@ orbs:
 commands:
   # Exercise - Rollback
   destroy_environment:
-    docker:
-      - image: amazon/aws-cli
     steps:
       - run:
           name: Destroy environment
@@ -65,7 +63,7 @@ jobs:
 
   smoke_test_2:
     docker:
-      - image: alpine:latest
+      - image: amazon/aws-cli
     steps:
       - run:
           name: Test Job
