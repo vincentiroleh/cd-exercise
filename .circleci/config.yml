@@ -14,6 +14,7 @@ commands:
             aws cloudformation delete-stack --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:7}
 
 jobs:
+
   configure_infrastructure:
     docker:
       - image: python:3.7-alpine3.11
@@ -29,7 +30,6 @@ jobs:
           name: Configure server
           command: |
             ansible-playbook -i inventory main.yml
-
   # Exercise - Rollback
   create_infrastructure:
     docker:
@@ -93,11 +93,11 @@ jobs:
       - checkout
       - run: yum install -y tar gzip
       - run:
-        name: Fetch and save the old pipeline ID (bucket name) responsible for the last release.
-        command: |
-          aws cloudformation \
-          list-exports --query "Exports[?Name==\`PipelineID\`].Value" \
-          --no-paginate --output text > ~/textfile.txt
+          name: Fetch and save the old pipeline ID (bucket name) responsible for the last release.
+          command: |
+            aws cloudformation \
+            list-exports --query "Exports[?Name==\`PipelineID\`].Value" \
+            --no-paginate --output text > ~/textfile.txt
       - persist_to_workspace:
           root: ~/
           paths:
@@ -116,22 +116,22 @@ jobs:
             --stack-name production-distro \
             --parameter-overrides PipelineID="mybucket-${CIRCLE_WORKFLOW_ID:0:7}"
   
-  # Destroy the previous production version's S3 bucket and CloudFormation stack. 
-clean_up_old_front_end:
-  docker:
-    - image: amazon/aws-cli
-  steps:
-    - checkout
-    - run: yum install -y tar gzip
-    - attach_workspace:
-        at: ~/
-    - run:
-        name: Destroy the previous S3 bucket and CloudFormation stack. 
-        # Use $OldBucketID environment variable or mybucket644752792305 below.
-        # Similarly, you can create and use $OldStackID environment variable in place of production-distro 
-        command: |
-          export OldBucketID=$(cat ~/textfile.txt)
-          aws s3 rm "s3://${OldBucketID}" --recursive
+  # Destroy the previous production version's S3 bucket and CloudFormation stack.
+  clean_up_old_front_end:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run: yum install -y tar gzip
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Destroy the previous S3 bucket and CloudFormation stack.
+          # Use $OldBucketID environment variable or mybucket644752792305 below.
+          # Similarly, you can create and use $OldStackID environment variable in place of production-distro
+          command: |
+            export OldBucketID=$(cat ~/textfile.txt)
+            aws s3 rm "s3://${OldBucketID}" --recursive
 
 workflows:
   my_workflow:
@@ -140,7 +140,7 @@ workflows:
       # - create_infrastructure
       # - smoke_test
       # - smoke_test_2:
-      #     requires: 
+      #     requires:
       #       - create_infrastructure
       - create_and_deploy_front_end
       - promote_to_production:
